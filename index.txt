@@ -1,4 +1,4 @@
-https://pixelcraft.vercel.app
+https://pixelcraft-pic.vercel.app
   PixelCraft - Online Photo Editor Studio
   PixelCraft is a free, privacy-focused online photo editor. Upscale, 
   resize, compress, and convert your photos (JPG, PNG, WEBP, HEIC, TIFF) 
