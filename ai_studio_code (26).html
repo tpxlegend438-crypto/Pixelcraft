@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- SEO & Google Search Meta Tags -->
+    <title>PixelCraft - Privacy-First Browser Photo Editor Studio</title>
+    <meta name="description" content="PixelCraft is a free, privacy-focused online photo editor. Upscale, resize, compress, and convert your photos (JPG, PNG, WEBP, HEIC, TIFF) 100% locally in your browser.">
+    <meta name="keywords" content="photo editor, image upscaler, image compressor, image converter, browser photo editor, HEIC to JPG, resize image online">
+    <meta name="author" content="PixelCraft Studio">
+
+    <!-- Open Graph (OG) Meta Tags for Social Media & Google Search Cards -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="PixelCraft - Online Photo Editor Studio">
+    <meta property="og:description" content="Upscale, resize, compress, and convert images with 100% client-side privacy. Fast and free.">
+    <meta property="og:image" content="logo.png">
+    <meta property="og:url" content="https://yourdomain.com/">
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="PixelCraft - Browser Photo Editor Studio">
+    <meta name="twitter:description" content="Resize, upscale, compress & convert images with 100% local browser processing.">
+    <meta name="twitter:image" content="logo.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="logo.png">
+
+    <!-- Google Search Structured Data (Schema.org JSON-LD for Google Rich Results & Logo Indexing) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "PixelCraft",
+      "alternateName": "PixelCraft Photo Studio",
+      "url": "https://yourdomain.com/",
+      "logo": "https://yourdomain.com/logo.png",
+      "image": "https://yourdomain.com/logo.png",
+      "description": "A privacy-first, 100% browser-based photo studio to upscale, resize, compress, and convert images instantly without uploading files to any server.",
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "All",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- HEIC Conversion Library -->
+    <script src="https://unpkg.com/heic2any@0.0.4/dist/heic2any.min.js"></script>
+    <!-- TIFF Support Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/utif/1.3.0/UTIF.min.js"></script>
+
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #090d16 0%, #111827 50%, #0f172a 100%);
+            --card-bg: rgba(30, 41, 59, 0.65);
+            --card-border: rgba(255, 255, 255, 0.12);
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --accent: #10b981;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --radius: 18px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.25rem 1rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Background Animation */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.45;
+            animation: float 18s ease-in-out infinite alternate;
+        }
+
+        .blob-1 {
+            top: -10%;
+            left: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, #6366f1 0%, #a855f7 100%);
+            animation-duration: 20s;
+        }
+
+        .blob-2 {
+            bottom: -10%;
+            right: -5%;
+            width: 550px;
+            height: 550px;
+            background: radial-gradient(circle, #0ea5e9 0%, #10b981 100%);
+            animation-duration: 24s;
+            animation-delay: -5s;
+        }
+
+        .blob-3 {
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, #ec4899 0%, #8b5cf6 100%);
+            animation-duration: 22s;
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+            50% { transform: translate(60px, 40px) scale(1.1) rotate(180deg); }
+            100% { transform: translate(-40px, 80px) scale(0.9) rotate(360deg); }
+        }
+
+        /* Top Bar Header Layout */
+        header {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 2rem;
+            z-index: 1;
+        }
+
+        .top-navbar {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 16px;
+            margin-bottom: 1rem;
+        }
+
+        /* Stylish Logo in Top Corner */
+        .corner-logo {
+            width: 55px;
+            height: 55px;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+            border-radius: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .corner-logo:hover {
+            transform: scale(1.05);
+        }
+
+        /* Stylish PixelCraft Title */
+        .stylish-brand-title {
+            font-family: 'Syne', 'Plus Jakarta Sans', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #ffffff 0%, #c084fc 50%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Website Description */
+        .site-description-box {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 0.9rem 1.4rem;
+            text-align: center;
+            max-width: 800px;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+        }
+
+        .site-description-box strong {
+            color: var(--text-main);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            z-index: 1;
+        }
+
+        /* Glassmorphism Card Style */
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 1.75rem;
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
+        }
+
+        .card-header-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1.25rem;
+            color: #a5b4fc;
+        }
+
+        /* Drop Zone */
+        .drop-zone {
+            border: 2px dashed rgba(99, 102, 241, 0.4);
+            border-radius: var(--radius);
+            padding: 2.75rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(15, 23, 42, 0.4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.25);
+        }
+
+        .drop-zone-icon {
+            font-size: 2.5rem;
+            color: #818cf8;
+            margin-bottom: 1rem;
+        }
+
+        .drop-zone h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .drop-zone p {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        /* Main Workspace Grid */
+        .workspace {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 850px) {
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .preview-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            min-height: 280px;
+            position: relative;
+        }
+
+        .preview-box img {
+            max-width: 100%;
+            max-height: 280px;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .file-info-badge {
+            margin-top: 1rem;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Controls Panel */
+        .control-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .control-group label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.88rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input[type="number"], select {
+            width: 100%;
+            padding: 0.7rem 0.9rem;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            background: rgba(15, 23, 42, 0.8);
+            color: var(--text-main);
+            outline: none;
+            font-size: 0.9rem;
+            transition: border 0.2s;
+        }
+
+        input[type="number"]:focus, select:focus {
+            border-color: var(--primary);
+        }
+
+        .aspect-ratio-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            padding: 0.7rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .aspect-ratio-btn.active {
+            color: var(--primary);
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        /* Upscale Presets */
+        .upscale-presets {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 0.5rem;
+        }
+
+        .upscale-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            padding: 0.45rem 0.25rem;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .upscale-btn:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.15);
+        }
+
+        .upscale-btn.active {
+            background: linear-gradient(135deg, var(--primary) 0%, #818cf8 100%);
+            border-color: transparent;
+            color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Slider */
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 0.85rem 1.25rem;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.25s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+        }
+
+        .highlight-box {
+            border: 1px solid rgba(99, 102, 241, 0.5);
+            background: rgba(99, 102, 241, 0.08);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        /* Loader Overlay */
+        .loader {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.92);
+            border-radius: 12px;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            z-index: 10;
+        }
+
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        footer {
+            margin-top: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <!-- Top Header Layout -->
+    <header>
+        <div class="top-navbar">
+            <!-- Top Corner Logo -->
+            <img src="logo.png" alt="PixelCraft Logo" class="corner-logo">
+            <!-- Stylish Brand Title -->
+            <h1 class="stylish-brand-title">PixelCraft</h1>
+        </div>
+
+        <!-- Short Website Work Description -->
+        <div class="site-description-box">
+            <strong>PixelCraft</strong> is a privacy-focused photo editing studio. Easily <strong>upscale, resize, compress, and convert</strong> images (JPG, PNG, WEBP, GIF, BMP, TIFF, HEIC & SVG) directly in your browser with <strong>100% local processing</strong>—no image data ever leaves your device.
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- File Upload Card -->
+        <div class="glass-card">
+            <div class="drop-zone" id="drop-zone">
+                <i class="fa-solid fa-cloud-arrow-up drop-zone-icon"></i>
+                <h3>Drag & Drop your photo here</h3>
+                <p>Supports JPG, PNG, WEBP, GIF, BMP, TIFF, HEIC & SVG</p>
+                <input type="file" id="file-input" accept="image/*,.heic,.heif,.tiff,.bmp,.svg">
+            </div>
+        </div>
+
+        <!-- Main Workspace Grid -->
+        <div class="workspace" id="workspace">
+            
+            <!-- Controls Column -->
+            <div class="glass-card">
+                <div class="card-header-title">
+                    <i class="fa-solid fa-sliders"></i>
+                    <h3 style="color: #a5b4fc;">Controls & Settings</h3>
+                </div>
+
+                <!-- Photo Upscale Section -->
+                <div class="control-group highlight-box" id="upscale-section">
+                    <label>
+                        <span><i class="fa-solid fa-expand" style="color: #818cf8;"></i> Photo Upscale Multiplier</span>
+                        <span id="upscale-badge" style="font-size: 0.75rem; color: #34d399; font-weight: 700;">1x Original</span>
+                    </label>
+                    <div class="upscale-presets">
+                        <button class="upscale-btn active" data-scale="1">1x</button>
+                        <button class="upscale-btn" data-scale="1.5">1.5x</button>
+                        <button class="upscale-btn" data-scale="2">2x HD</button>
+                        <button class="upscale-btn" data-scale="4">4x 4K</button>
+                    </div>
+
+                    <!-- Upscale Algorithm Selection -->
+                    <div style="margin-top: 0.75rem;">
+                        <label style="font-size: 0.8rem; margin-bottom: 0.25rem;">Upscale Algorithm</label>
+                        <select id="upscale-mode" style="padding: 0.5rem 0.75rem; font-size: 0.85rem;">
+                            <option value="smart">Smart Multi-Pass Interpolation (Smooth)</option>
+                            <option value="sharp" selected>Sharp Edge & Detail Enhancement</option>
+                            <option value="pixel">Crisp Pixel Art (No Smoothing)</option>
+                        </select>
+                    </div>
+
+                    <!-- Sharpen Strength Slider -->
+                    <div style="margin-top: 0.75rem;" id="sharpen-group">
+                        <label style="font-size: 0.8rem; margin-bottom: 0.25rem;">
+                            Detail Sharpening: <span id="sharpen-val" style="color: var(--accent);">35%</span>
+                        </label>
+                        <div class="slider-container">
+                            <input type="range" id="sharpen-slider" min="0" max="100" value="35">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dimension Controls -->
+                <div class="control-group" id="dimension-group">
+                    <label>Dimensions (Pixels)</label>
+                    <div class="input-row">
+                        <input type="number" id="img-width" placeholder="Width">
+                        <span style="color: var(--text-muted)">×</span>
+                        <input type="number" id="img-height" placeholder="Height">
+                        <button class="aspect-ratio-btn active" id="aspect-ratio-toggle" title="Lock Aspect Ratio">
+                            <i class="fa-solid fa-link"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Format Selection -->
+                <div class="control-group" id="format-group">
+                    <label for="format-select">Target Format</label>
+                    <select id="format-select">
+                        <option value="image/jpeg">JPG / JPEG</option>
+                        <option value="image/png">PNG</option>
+                        <option value="image/webp">WEBP</option>
+                        <option value="image/gif">GIF</option>
+                        <option value="image/bmp">BMP</option>
+                        <option value="image/tiff">TIFF</option>
+                        <option value="image/svg+xml">SVG</option>
+                    </select>
+                </div>
+
+                <!-- Quality / Compression -->
+                <div class="control-group" id="quality-group">
+                    <label>Quality / Compression: <span id="quality-val" style="color: var(--accent);">85%</span></label>
+                    <div class="slider-container">
+                        <input type="range" id="quality-slider" min="1" max="100" value="85">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" id="process-btn">
+                    <i class="fa-solid fa-gear"></i> Process & Generate Image
+                </button>
+            </div>
+
+            <!-- Preview & Download Column -->
+            <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div class="card-header-title">
+                        <i class="fa-solid fa-image"></i>
+                        <h3 style="color: #a5b4fc;">Output Preview</h3>
+                    </div>
+                    <div class="preview-box">
+                        <div class="loader" id="loader">
+                            <div class="spinner"></div>
+                            <span id="loader-text" style="font-size: 0.88rem;">Processing...</span>
+                        </div>
+                        <img id="preview-img" src="" alt="Preview Output">
+                        <div class="file-info-badge" id="info-badge">
+                            <span><i class="fa-solid fa-ruler-combined"></i> <span id="out-dim">0 x 0</span></span>
+                            <span><i class="fa-solid fa-hard-drive"></i> <span id="out-size">0 KB</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <a id="download-btn" class="btn btn-success" style="margin-top: 1.5rem; text-decoration: none; display: none;">
+                    <i class="fa-solid fa-download"></i> Download Image
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+    <footer>
+        <span>PixelCraft Photo Editor Studio &bull; 100% Client-Side Local Processing</span>
+    </footer>
+
+    <script>
+        // DOM Elements
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const workspace = document.getElementById('workspace');
+        const imgWidth = document.getElementById('img-width');
+        const imgHeight = document.getElementById('img-height');
+        const aspectRatioBtn = document.getElementById('aspect-ratio-toggle');
+        const formatSelect = document.getElementById('format-select');
+        const qualitySlider = document.getElementById('quality-slider');
+        const qualityVal = document.getElementById('quality-val');
+        const qualityGroup = document.getElementById('quality-group');
+        const sharpenSlider = document.getElementById('sharpen-slider');
+        const sharpenVal = document.getElementById('sharpen-val');
+        const upscaleMode = document.getElementById('upscale-mode');
+        const upscaleBadge = document.getElementById('upscale-badge');
+        const processBtn = document.getElementById('process-btn');
+        const previewImg = document.getElementById('preview-img');
+        const downloadBtn = document.getElementById('download-btn');
+        const loader = document.getElementById('loader');
+        const loaderText = document.getElementById('loader-text');
+        const outDim = document.getElementById('out-dim');
+        const outSize = document.getElementById('out-size');
+
+        // State Variables
+        let loadedImage = null;
+        let originalAspectRatio = 1;
+        let lockAspectRatio = true;
+        let originalFileName = "processed_image";
+        let currentScaleFactor = 1;
+        let baseNaturalWidth = 0;
+        let baseNaturalHeight = 0;
+
+        // Drag & Drop Listeners
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) handleFile(e.target.files[0]);
+        });
+
+        // Aspect Ratio Lock Toggle
+        aspectRatioBtn.addEventListener('click', () => {
+            lockAspectRatio = !lockAspectRatio;
+            aspectRatioBtn.classList.toggle('active', lockAspectRatio);
+        });
+
+        // Dimension Inputs Auto-Calculate Aspect Ratio
+        imgWidth.addEventListener('input', () => {
+            if (lockAspectRatio && loadedImage) {
+                imgHeight.value = Math.round(imgWidth.value / originalAspectRatio);
+            }
+        });
+        imgHeight.addEventListener('input', () => {
+            if (lockAspectRatio && loadedImage) {
+                imgWidth.value = Math.round(imgHeight.value * originalAspectRatio);
+            }
+        });
+
+        // Quality Slider Display Update
+        qualitySlider.addEventListener('input', (e) => {
+            qualityVal.textContent = `${e.target.value}%`;
+        });
+
+        // Sharpen Slider Display Update
+        sharpenSlider.addEventListener('input', (e) => {
+            sharpenVal.textContent = `${e.target.value}%`;
+        });
+
+        // Upscale Presets Click Listener
+        const upscaleBtns = document.querySelectorAll('.upscale-btn');
+        upscaleBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const factor = parseFloat(btn.dataset.scale);
+                setUpscaleFactor(factor);
+                if (loadedImage) processImage();
+            });
+        });
+
+        function setUpscaleFactor(factor) {
+            currentScaleFactor = factor;
+            upscaleBtns.forEach(b => {
+                b.classList.toggle('active', parseFloat(b.dataset.scale) === factor);
+            });
+            upscaleBadge.textContent = factor === 1 ? '1x Original' : `${factor}x Upscaling`;
+
+            if (loadedImage) {
+                imgWidth.value = Math.round(baseNaturalWidth * factor);
+                imgHeight.value = Math.round(baseNaturalHeight * factor);
+            }
+        }
+
+        formatSelect.addEventListener('change', () => {
+            const fmt = formatSelect.value;
+            if (fmt === 'image/png' || fmt === 'image/gif' || fmt === 'image/svg+xml' || fmt === 'image/bmp') {
+                qualityGroup.style.opacity = '0.5';
+                qualitySlider.disabled = true;
+            } else {
+                qualityGroup.style.opacity = '1';
+                qualitySlider.disabled = false;
+            }
+        });
+
+        // File Loading Handler
+        async function handleFile(file) {
+            showLoader("Loading File...");
+            workspace.style.display = 'grid';
+            originalFileName = file.name.substring(0, file.name.lastIndexOf('.')) || "processed_image";
+
+            let fileUrl = '';
+
+            try {
+                if (file.name.toLowerCase().endsWith('.heic') || file.type === "image/heic") {
+                    const blob = await heic2any({ blob: file, toType: "image/jpeg" });
+                    fileUrl = URL.createObjectURL(Array.isArray(blob) ? blob[0] : blob);
+                } 
+                else if (file.name.toLowerCase().endsWith('.tiff') || file.name.toLowerCase().endsWith('.tif')) {
+                    const buffer = await file.arrayBuffer();
+                    const ifds = UTIF.decode(buffer);
+                    UTIF.decodeImage(buffer, ifds[0]);
+                    const rgba = UTIF.toRGBA8(ifds[0]);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = ifds[0].width;
+                    canvas.height = ifds[0].height;
+                    const ctx = canvas.getContext('2d');
+                    const imgData = ctx.createImageData(canvas.width, canvas.height);
+                    imgData.data.set(rgba);
+                    ctx.putImageData(imgData, 0, 0);
+                    fileUrl = canvas.toDataURL();
+                } 
+                else {
+                    fileUrl = URL.createObjectURL(file);
+                }
+
+                const img = new Image();
+                img.onload = () => {
+                    loadedImage = img;
+                    baseNaturalWidth = img.naturalWidth;
+                    baseNaturalHeight = img.naturalHeight;
+                    originalAspectRatio = img.naturalWidth / img.naturalHeight;
+                    
+                    imgWidth.value = Math.round(baseNaturalWidth * currentScaleFactor);
+                    imgHeight.value = Math.round(baseNaturalHeight * currentScaleFactor);
+
+                    hideLoader();
+                    processImage();
+                };
+                img.src = fileUrl;
+
+            } catch (err) {
+                alert("Error processing file format: " + err.message);
+                hideLoader();
+            }
+        }
+
+        // Processing & Upscaling Function
+        processBtn.addEventListener('click', processImage);
+
+        async function processImage() {
+            if (!loadedImage) return;
+
+            showLoader(currentScaleFactor > 1 ? "Upscaling & Enhancing..." : "Processing Image...");
+
+            setTimeout(() => {
+                const targetWidth = parseInt(imgWidth.value) || loadedImage.naturalWidth;
+                const targetHeight = parseInt(imgHeight.value) || loadedImage.naturalHeight;
+                const selectedMode = upscaleMode.value;
+
+                let canvas = document.createElement('canvas');
+                canvas.width = targetWidth;
+                canvas.height = targetHeight;
+                let ctx = canvas.getContext('2d');
+
+                if (selectedMode === 'pixel') {
+                    ctx.imageSmoothingEnabled = false;
+                    ctx.drawImage(loadedImage, 0, 0, targetWidth, targetHeight);
+                } else if (selectedMode === 'smart' && (targetWidth > loadedImage.naturalWidth || targetHeight > loadedImage.naturalHeight)) {
+                    canvas = multiStepScale(loadedImage, targetWidth, targetHeight);
+                    ctx = canvas.getContext('2d');
+                } else {
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(loadedImage, 0, 0, targetWidth, targetHeight);
+                }
+
+                const selectedFormat = formatSelect.value;
+                if (selectedFormat === 'image/jpeg') {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = targetWidth;
+                    tempCanvas.height = targetHeight;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.fillStyle = '#FFFFFF';
+                    tempCtx.fillRect(0, 0, targetWidth, targetHeight);
+                    tempCtx.drawImage(canvas, 0, 0);
+                    canvas = tempCanvas;
+                    ctx = canvas.getContext('2d');
+                }
+
+                const sharpenAmount = parseInt(sharpenSlider.value) / 100;
+                if (sharpenAmount > 0 && selectedMode !== 'pixel') {
+                    applySharpenFilter(ctx, targetWidth, targetHeight, sharpenAmount);
+                }
+
+                const quality = parseFloat(qualitySlider.value) / 100;
+
+                if (selectedFormat === 'image/svg+xml') {
+                    const imgDataUrl = canvas.toDataURL('image/png');
+                    const svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="${targetWidth}" height="${targetHeight}">
+                        <image href="${imgDataUrl}" width="${targetWidth}" height="${targetHeight}"/>
+                    </svg>`;
+                    const blob = new Blob([svgString], { type: 'image/svg+xml' });
+                    updatePreviewAndDownload(blob, `${originalFileName}_pixelcraft.svg`, targetWidth, targetHeight);
+                    hideLoader();
+                    return;
+                }
+
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        alert("Could not render selected format");
+                        hideLoader();
+                        return;
+                    }
+                    const ext = selectedFormat.split('/')[1].replace('+xml', '');
+                    updatePreviewAndDownload(blob, `${originalFileName}_pixelcraft.${ext}`, targetWidth, targetHeight);
+                    hideLoader();
+                }, selectedFormat, quality);
+
+            }, 60);
+        }
+
+        function multiStepScale(img, targetW, targetH) {
+            let curW = img.naturalWidth;
+            let curH = img.naturalHeight;
+
+            let offCanvas = document.createElement('canvas');
+            offCanvas.width = curW;
+            offCanvas.height = curH;
+            let offCtx = offCanvas.getContext('2d');
+            offCtx.drawImage(img, 0, 0);
+
+            while (curW * 1.5 < targetW && curH * 1.5 < targetH) {
+                curW = Math.round(curW * 1.5);
+                curH = Math.round(curH * 1.5);
+
+                const stepCanvas = document.createElement('canvas');
+                stepCanvas.width = curW;
+                stepCanvas.height = curH;
+                const stepCtx = stepCanvas.getContext('2d');
+                stepCtx.imageSmoothingEnabled = true;
+                stepCtx.imageSmoothingQuality = 'high';
+                stepCtx.drawImage(offCanvas, 0, 0, curW, curH);
+                offCanvas = stepCanvas;
+            }
+
+            const finalCanvas = document.createElement('canvas');
+            finalCanvas.width = targetW;
+            finalCanvas.height = targetH;
+            const finalCtx = finalCanvas.getContext('2d');
+            finalCtx.imageSmoothingEnabled = true;
+            finalCtx.imageSmoothingQuality = 'high';
+            finalCtx.drawImage(offCanvas, 0, 0, targetW, targetH);
+
+            return finalCanvas;
+        }
+
+        function applySharpenFilter(ctx, width, height, strength) {
+            try {
+                const imgData = ctx.getImageData(0, 0, width, height);
+                const data = imgData.data;
+                const copy = new Uint8ClampedArray(data);
+                const mix = strength * 0.8;
+
+                for (let y = 1; y < height - 1; y++) {
+                    for (let x = 1; x < width - 1; x++) {
+                        const idx = (y * width + x) * 4;
+                        for (let c = 0; c < 3; c++) {
+                            const cIdx = idx + c;
+                            const top = ((y - 1) * width + x) * 4 + c;
+                            const bottom = ((y + 1) * width + x) * 4 + c;
+                            const left = (y * width + (x - 1)) * 4 + c;
+                            const right = (y * width + (x + 1)) * 4 + c;
+
+                            const center = copy[cIdx];
+                            const val = center * (1 + 4 * mix) - mix * (copy[top] + copy[bottom] + copy[left] + copy[right]);
+                            data[cIdx] = Math.min(255, Math.max(0, val));
+                        }
+                    }
+                }
+                ctx.putImageData(imgData, 0, 0);
+            } catch (e) {
+                console.warn("Sharpen filter skipped.");
+            }
+        }
+
+        function updatePreviewAndDownload(blob, filename, width, height) {
+            const blobUrl = URL.createObjectURL(blob);
+            previewImg.src = blobUrl;
+            
+            downloadBtn.href = blobUrl;
+            downloadBtn.download = filename;
+            downloadBtn.style.display = 'flex';
+
+            outDim.textContent = `${width} × ${height} px`;
+            outSize.textContent = formatBytes(blob.size);
+        }
+
+        function showLoader(text) {
+            loaderText.textContent = text;
+            loader.style.display = 'flex';
+        }
+
+        function hideLoader() {
+            loader.style.display = 'none';
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>
