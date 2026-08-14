@@ -1,0 +1,29 @@
+# PixelCraft - Privacy-First Browser Photo Editor Studio
+
+> PixelCraft is a free, privacy-focused online photo editing studio that operates 100% client-side in the web browser. All rendering, image upscaling, photo compression, filtering, and format conversions happen locally on the user's device with zero server uploads.
+
+## Core Capabilities
+
+- **100% Private & Secure**: No images are uploaded to any external server. All processing runs via local browser Web APIs and JavaScript.
+- **Smart Photo Compression**: Reduce image file sizes up to 90% with customizable WebP and JPEG compression levels.
+- **Image Resizing & Upscaling**: Multi-pass interpolation, sharp detail enhancement, and crisp nearest-neighbor mode for pixel art.
+- **Format Conversion**: Full support for JPG, PNG, WEBP, HEIC (iPhone), TIFF, GIF, BMP, and SVG export.
+- **Color Adjustments & Filters**: Real-time controls for brightness, contrast, saturation, blur, sepia, and detail sharpening.
+- **Transformations**: 90-degree left/right rotations and horizontal/vertical flipping.
+- **Watermark Text Overlay**: Custom text overlays with adjustable positioning, font sizes, color selection, and drop-shadows.
+
+## Supported File Formats
+
+- Input: JPG, JPEG, PNG, WEBP, HEIC, HEIF, TIFF, TIF, GIF, BMP, SVG
+- Output: JPG, PNG, WEBP, GIF, BMP, TIFF, SVG
+
+## Architecture & Tech Stack
+
+- **Client-Side Rendering**: HTML5 Canvas API
+- **HEIC Conversion**: `heic2any` library
+- **TIFF Processing**: `UTIF.js` library
+- **UI Framework**: Native HTML5, CSS3, ES6+ JavaScript
+
+## Links
+
+- [PixelCraft Studio Web App](https://pixelcraftart.vercel.app/): Main online photo editor workspace.
