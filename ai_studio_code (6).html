@@ -1,0 +1,2297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+
+    <!-- SEO & Google Search Meta Tags -->
+    <title>PixelCraft - Privacy-First Browser Photo Editor Studio</title>
+    <meta name="description" content="PixelCraft is a free, privacy-focused online photo editor. Crop, upscale, resize, compress, adjust colors, apply filters, rotate, frame, watermark, and convert your photos 100% locally in your browser.">
+    <meta name="keywords" content="photo editor, crop image, image upscaler, image compressor, photo compressor, color adjustment, film grain, vignette, photo filters, watermark, rotate image, HEIC to JPG">
+    <meta name="author" content="PixelCraft Studio">
+
+    <!-- Open Graph (OG) Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="PixelCraft - Online Photo Editor Studio">
+    <meta property="og:description" content="Crop, upscale, resize, filter, frame, watermark, compress, and convert images with 100% client-side privacy.">
+    <meta property="og:image" content="logo.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="logo.png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- HEIC & TIFF Support Libraries -->
+    <script src="https://unpkg.com/heic2any@0.0.4/dist/heic2any.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/utif/1.3.0/UTIF.min.js"></script>
+
+    <style>
+        :root {
+            --bg-main: #090a0f;
+            --bg-header: #0d0e14;
+            --bg-sidebar: #0f1017;
+            --bg-card: #12141d;
+            --bg-card-hover: #181b27;
+            --bg-input: #171924;
+            --card-border: rgba(255, 255, 255, 0.08);
+            --card-border-active: rgba(0, 240, 255, 0.3);
+            
+            --primary: #d946ef;
+            --primary-hover: #c026d3;
+            --primary-glow: rgba(217, 70, 239, 0.35);
+            
+            --cyan: #00f0ff;
+            --cyan-glow: rgba(0, 240, 255, 0.25);
+            
+            --accent: #10b981;
+            --text-main: #f8fafc;
+            --text-muted: #8b92a5;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Ambient Glow & Grid */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: 
+                radial-gradient(circle at 15% 20%, rgba(217, 70, 239, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 80%, rgba(0, 240, 255, 0.06) 0%, transparent 40%),
+                radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 24px 24px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg-main); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--cyan); }
+
+        /* HEADER NAVBAR */
+        .app-header {
+            height: 64px;
+            background: var(--bg-header);
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .brand-logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .brand-icon-box {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--cyan) 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 12px var(--primary-glow);
+        }
+
+        .brand-icon-box i {
+            color: #fff;
+            font-size: 0.95rem;
+        }
+
+        .brand-text {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.3px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--cyan) 100%);
+            color: #fff;
+            border: none;
+            padding: 0.5rem 1.1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 15px rgba(217, 70, 239, 0.25);
+        }
+
+        .btn-gradient:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0, 240, 255, 0.35);
+        }
+
+        /* PAGE VIEWS MANAGEMENT */
+        .page-view {
+            flex: 1;
+            z-index: 1;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .page-view.active {
+            display: flex;
+            flex-direction: column;
+            opacity: 1;
+        }
+
+        /* SCENE LOADER OVERLAY */
+        .scene-loader {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(9, 10, 15, 0.94);
+            backdrop-filter: blur(16px);
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .scene-loader.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .scene-loader-card {
+            background: var(--bg-card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-lg);
+            padding: 2.2rem 2.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+            max-width: 360px;
+            width: 100%;
+        }
+
+        .spinner-ring {
+            width: 60px;
+            height: 60px;
+            border: 3px solid rgba(255, 255, 255, 0.08);
+            border-top: 3px solid var(--primary);
+            border-right: 3px solid var(--cyan);
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+            margin-bottom: 1.2rem;
+        }
+
+        .scene-loader h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.2rem;
+            color: var(--text-main);
+            margin-bottom: 0.3rem;
+        }
+
+        .scene-loader p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* ================= LANDING PAGE ================= */
+        .landing-container {
+            max-width: 1100px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem 3rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hero-logo-box {
+            width: 90px;
+            height: 90px;
+            background: #000;
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.2rem;
+            box-shadow: 0 0 30px var(--primary-glow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-logo-box img {
+            width: 70px;
+            height: 70px;
+            object-fit: contain;
+        }
+
+        .hero-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(2.2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.8rem;
+            text-align: center;
+        }
+
+        .badge-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 1.2rem;
+        }
+
+        .feature-pill {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            padding: 0.4rem 0.9rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feature-pill i { color: var(--cyan); font-size: 0.8rem; }
+
+        .hero-sub {
+            max-width: 680px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        .hero-sub strong { color: var(--text-main); }
+
+        .drop-card {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px dashed var(--card-border);
+            border-radius: var(--radius-lg);
+            padding: 3.5rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .drop-card:hover, .drop-card.dragover {
+            border-color: var(--cyan);
+            background: var(--bg-card-hover);
+            box-shadow: 0 0 25px var(--cyan-glow);
+        }
+
+        .drop-icon-circle {
+            width: 54px;
+            height: 54px;
+            background: rgba(0, 240, 255, 0.08);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.2rem;
+            color: var(--cyan);
+            font-size: 1.4rem;
+        }
+
+        .drop-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.4rem;
+        }
+
+        .drop-card p {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .format-pills {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .format-pill {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            padding: 0.25rem 0.65rem;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        #file-input { display: none; }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+            width: 100%;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: transform 0.25s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .feature-card i {
+            font-size: 1.3rem;
+            color: var(--cyan);
+        }
+
+        .feature-card h4 {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .feature-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* ================= EDITOR DASHBOARD PAGE ================= */
+        .editor-workspace {
+            display: grid;
+            grid-template-columns: 200px 380px 1fr;
+            flex: 1;
+            min-height: calc(100vh - 100px);
+            overflow: hidden;
+        }
+
+        /* LEFT SIDEBAR */
+        .sidebar {
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--card-border);
+            padding: 1.25rem 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .sidebar-title-box {
+            padding: 0 0.5rem;
+        }
+
+        .sidebar-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .sidebar-sub {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .sidebar-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            list-style: none;
+        }
+
+        .sidebar-tab {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-tab i {
+            font-size: 0.95rem;
+            width: 18px;
+            text-align: center;
+        }
+
+        .sidebar-tab:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .sidebar-tab.active {
+            background: linear-gradient(90deg, rgba(217, 70, 239, 0.25) 0%, rgba(217, 70, 239, 0.05) 100%);
+            color: #fff;
+            border-left: 3px solid var(--primary);
+            box-shadow: inset 0 0 10px rgba(217, 70, 239, 0.1);
+        }
+
+        /* CENTER CONTROLS PANEL */
+        .controls-panel {
+            background: var(--bg-card);
+            border-right: 1px solid var(--card-border);
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .panel-header {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        .control-group { margin-bottom: 1.25rem; }
+        .control-group label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.82rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .value-badge {
+            color: var(--cyan);
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 0.82rem;
+        }
+
+        .input-row { display: flex; gap: 10px; align-items: center; }
+
+        input[type="number"], input[type="text"], select {
+            width: 100%;
+            height: 42px;
+            padding: 0 0.85rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--card-border);
+            background: var(--bg-input);
+            color: var(--text-main);
+            outline: none;
+            font-size: 0.85rem;
+            transition: border-color 0.2s ease;
+        }
+
+        input[type="number"]:focus, input[type="text"]:focus, select:focus {
+            border-color: var(--cyan);
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .btn-grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .btn-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .preset-btn {
+            background: var(--bg-input);
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            padding: 0.6rem 0.4rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .preset-btn:hover {
+            color: var(--text-main);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .preset-btn.active {
+            background: rgba(0, 240, 255, 0.08);
+            border-color: var(--cyan);
+            color: var(--cyan);
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
+        }
+
+        .aspect-ratio-btn {
+            background: var(--bg-input);
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            min-width: 42px;
+            height: 42px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .aspect-ratio-btn.active {
+            color: var(--cyan);
+            border-color: var(--cyan);
+            background: rgba(0, 240, 255, 0.1);
+        }
+
+        /* SLIDERS */
+        .slider-container { display: flex; align-items: center; height: 32px; }
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--cyan);
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--cyan);
+        }
+
+        /* ACTION BUTTONS */
+        .btn-action-primary {
+            width: 100%;
+            height: 44px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--cyan) 100%);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(217, 70, 239, 0.3);
+            transition: all 0.25s ease;
+            margin-top: 1rem;
+        }
+
+        .btn-action-primary:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0, 240, 255, 0.4);
+        }
+
+        .btn-action-secondary {
+            width: 100%;
+            height: 42px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-action-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* RIGHT PREVIEW STAGE */
+        .preview-panel {
+            background: var(--bg-main);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .preview-card-wrap {
+            width: 100%;
+            max-width: 720px;
+            background: var(--bg-card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .preview-card-header {
+            width: 100%;
+            text-align: center;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1.2rem;
+            color: var(--text-main);
+        }
+
+        .canvas-container {
+            width: 100%;
+            min-height: 320px;
+            max-height: 460px;
+            background-color: #0d0e14;
+            background-image: 
+                linear-gradient(45deg, #151722 25%, transparent 25%), 
+                linear-gradient(-45deg, #151722 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #151722 75%), 
+                linear-gradient(-45deg, transparent 75%, #151722 75%);
+            background-size: 16px 16px;
+            background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding: 1rem;
+        }
+
+        .canvas-container img {
+            max-width: 100%;
+            max-height: 420px;
+            object-fit: contain;
+            border-radius: 4px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+        }
+
+        .info-pills-bar {
+            display: flex;
+            gap: 16px;
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .info-pills-bar span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .info-pills-bar i { color: var(--cyan); }
+
+        .download-btn-bottom {
+            margin-top: 1.25rem;
+            width: 100%;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 0.88rem;
+            text-decoration: none;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .download-btn-bottom:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--cyan);
+            color: var(--cyan);
+        }
+
+        /* LOADER OVER PREVIEW */
+        .loader-overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(9, 10, 15, 0.85);
+            backdrop-filter: blur(6px);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            z-index: 5;
+        }
+
+        .loader-spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid var(--cyan);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* FOOTER */
+        .app-footer {
+            height: 40px;
+            background: var(--bg-header);
+            border-top: 1px solid var(--card-border);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            z-index: 10;
+        }
+
+        .footer-links { display: flex; gap: 15px; }
+        .footer-links a { color: var(--text-muted); text-decoration: none; }
+        .footer-links a:hover { color: var(--text-main); }
+
+        /* RESPONSIVE BREAKPOINTS (MOBILE & TABLET) */
+        @media (max-width: 960px) {
+            .editor-workspace {
+                display: flex;
+                flex-direction: column;
+                overflow-y: auto;
+            }
+
+            .sidebar {
+                border-right: none;
+                border-bottom: 1px solid var(--card-border);
+                padding: 0.75rem;
+                flex-direction: row;
+                align-items: center;
+                gap: 1rem;
+                overflow-x: auto;
+            }
+
+            .sidebar-title-box { display: none; }
+
+            .sidebar-menu {
+                flex-direction: row;
+                gap: 6px;
+                width: 100%;
+                overflow-x: auto;
+                padding-bottom: 4px;
+            }
+
+            .sidebar-tab {
+                white-space: nowrap;
+                padding: 0.5rem 0.85rem;
+                width: auto;
+            }
+
+            .sidebar-tab.active {
+                border-left: none;
+                border-bottom: 2px solid var(--primary);
+            }
+
+            .controls-panel {
+                border-right: none;
+                border-bottom: 1px solid var(--card-border);
+                padding: 1.25rem;
+            }
+
+            .preview-panel {
+                padding: 1.25rem 1rem;
+            }
+
+            .canvas-container {
+                min-height: 240px;
+            }
+            
+            .app-footer {
+                flex-direction: column;
+                justify-content: center;
+                gap: 4px;
+                height: auto;
+                padding: 0.75rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP APPLICATION NAVBAR -->
+    <header class="app-header">
+        <a class="brand-logo-wrap" id="go-home-btn">
+            <div class="brand-icon-box">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </div>
+            <span class="brand-text">PixelCraft</span>
+        </a>
+
+        <div class="header-actions">
+            <button class="btn-gradient" id="change-photo-btn" style="display: none;">
+                <i class="fa-solid fa-image"></i> Change Photo
+            </button>
+            <button class="btn-gradient" id="get-started-btn">
+                <i class="fa-solid fa-play"></i> Get Started
+            </button>
+        </div>
+    </header>
+
+    <!-- TRANSITION LOADING OVERLAY -->
+    <div id="scene-loader" class="scene-loader">
+        <div class="scene-loader-card">
+            <div class="spinner-ring"></div>
+            <h3 id="scene-loader-title">Preparing Your Studio...</h3>
+            <p id="scene-loader-sub">Reading pixels & initializing workspace</p>
+        </div>
+    </div>
+
+    <!-- ================= PAGE 1: LANDING PAGE ================= -->
+    <div id="landing-page" class="page-view active">
+        <main class="landing-container">
+            <div class="hero-logo-box">
+                <img src="logo.png" alt="PixelCraft Logo" onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><rect width=\'100\' height=\'100\' rx=\'20\' fill=\'%23d946ef\'/><circle cx=\'50\' cy=\'50\' r=\'20\' fill=\'%2300f0ff\'/></svg>';">
+            </div>
+
+            <h1 class="hero-title">PixelCraft</h1>
+
+            <div class="badge-bar">
+                <div class="feature-pill"><i class="fa-solid fa-shield-halved"></i> 100% Client-Side Private</div>
+                <div class="feature-pill"><i class="fa-solid fa-crop"></i> Smart Crop & Scale</div>
+                <div class="feature-pill"><i class="fa-solid fa-sliders"></i> Color Tuning</div>
+                <div class="feature-pill"><i class="fa-solid fa-mobile-screen-button"></i> Mobile Ready</div>
+            </div>
+
+            <p class="hero-sub">
+                A browser photo editor studio. Easily <strong>crop, upscale, compress, adjust colors, frame, filter, rotate, watermark, and convert</strong> your photos locally with zero server uploads.
+            </p>
+
+            <div class="drop-card" id="drop-zone">
+                <div class="drop-icon-circle">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                </div>
+                <h3>Drag & Drop your photo here</h3>
+                <p>or tap anywhere to choose from device</p>
+
+                <div class="format-pills">
+                    <span class="format-pill">JPG</span>
+                    <span class="format-pill">PNG</span>
+                    <span class="format-pill">WEBP</span>
+                    <span class="format-pill">HEIC</span>
+                    <span class="format-pill">TIFF</span>
+                    <span class="format-pill">SVG</span>
+                    <span class="format-pill">GIF</span>
+                    <span class="format-pill">BMP</span>
+                </div>
+            </div>
+
+            <!-- HIDDEN FILE INPUT -->
+            <input type="file" id="file-input" accept="image/*">
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <i class="fa-solid fa-crop"></i>
+                    <h4>Crop & Aspect Ratios</h4>
+                    <p>Crop photos into popular aspect ratios for Instagram Stories, square posts, landscape HD, or custom shapes.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fa-solid fa-sliders"></i>
+                    <h4>Pro Color Adjustments</h4>
+                    <p>Tweak brightness, contrast, hue, saturation, temperature, grain, vignette shadows, and border frames.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <h4>100% Local Privacy</h4>
+                    <p>Your photos stay on your device. All rendering, upscaling, and format conversions happen strictly inside your browser.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ================= PAGE 2: EDITOR STUDIO PAGE ================= -->
+    <div id="editor-page" class="page-view">
+        <div class="editor-workspace">
+            
+            <!-- LEFT SIDEBAR -->
+            <aside class="sidebar">
+                <div class="sidebar-title-box">
+                    <div class="sidebar-title">Tools</div>
+                    <div class="sidebar-sub">Edit Suite</div>
+                </div>
+
+                <ul class="sidebar-menu">
+                    <li><button class="sidebar-tab active" data-tab="tab-crop"><i class="fa-solid fa-crop"></i> Crop</button></li>
+                    <li><button class="sidebar-tab" data-tab="tab-scale"><i class="fa-solid fa-expand"></i> Scale</button></li>
+                    <li><button class="sidebar-tab" data-tab="tab-adjust"><i class="fa-solid fa-sliders"></i> Color Adjust</button></li>
+                    <li><button class="sidebar-tab" data-tab="tab-filters"><i class="fa-solid fa-palette"></i> Filters</button></li>
+                    <li><button class="sidebar-tab" data-tab="tab-effects"><i class="fa-solid fa-wand-magic-sparkles"></i> Effects</button></li>
+                    <li><button class="sidebar-tab" data-tab="tab-frame"><i class="fa-solid fa-border-all"></i> Frames</button></li>
+                    <li><button class="sidebar-tab" data-tab="tab-compress"><i class="fa-solid fa-compress"></i> Compress</button></li>
+                    <li><button class="sidebar-tab" data-tab="tab-transform"><i class="fa-solid fa-rotate"></i> Rotate</button></li>
+                    <li><button class="sidebar-tab" data-tab="tab-text"><i class="fa-solid fa-font"></i> Watermark</button></li>
+                    <li><button class="sidebar-tab" data-tab="tab-export"><i class="fa-solid fa-file-export"></i> Export</button></li>
+                </ul>
+            </aside>
+
+            <!-- CENTER CONTROLS PANEL -->
+            <section class="controls-panel">
+                <div>
+                    <!-- TAB 0: CROP & ASPECT RATIO (NEW) -->
+                    <div class="tab-panel active" id="tab-crop">
+                        <div class="panel-header">Crop & Aspect Ratio</div>
+
+                        <div class="control-group">
+                            <label>Aspect Ratio Preset</label>
+                            <div class="btn-grid-3">
+                                <button class="preset-btn crop-ratio-btn active" data-ratio="free">Original</button>
+                                <button class="preset-btn crop-ratio-btn" data-ratio="1:1">1:1 Square</button>
+                                <button class="preset-btn crop-ratio-btn" data-ratio="16:9">16:9 Wide</button>
+                                <button class="preset-btn crop-ratio-btn" data-ratio="9:16">9:16 Story</button>
+                                <button class="preset-btn crop-ratio-btn" data-ratio="4:3">4:3 Standard</button>
+                                <button class="preset-btn crop-ratio-btn" data-ratio="3:2">3:2 Photo</button>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Crop Zoom / Scale <span class="value-badge" id="crop-zoom-val">100%</span></label>
+                            <div class="slider-container">
+                                <input type="range" id="crop-zoom-slider" min="100" max="250" value="100">
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Horizontal Position Offset <span class="value-badge" id="crop-x-val">0%</span></label>
+                            <div class="slider-container">
+                                <input type="range" id="crop-x-slider" min="-100" max="100" value="0">
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Vertical Position Offset <span class="value-badge" id="crop-y-val">0%</span></label>
+                            <div class="slider-container">
+                                <input type="range" id="crop-y-slider" min="-100" max="100" value="0">
+                            </div>
+                        </div>
+
+                        <button class="btn-action-secondary" id="reset-crop-btn">
+                            <i class="fa-solid fa-rotate-left"></i> Reset Crop Position
+                        </button>
+                    </div>
+
+                    <!-- TAB 1: SCALE & RESIZE -->
+                    <div class="tab-panel" id="tab-scale">
+                        <div class="panel-header">Scale & Upscale</div>
+
+                        <div class="control-group">
+                            <label>Upscale Multiplier <span class="value-badge" id="upscale-badge">1x</span></label>
+                            <div class="btn-grid-4">
+                                <button class="preset-btn upscale-btn active" data-scale="1">1x</button>
+                                <button class="preset-btn upscale-btn" data-scale="1.5">1.5x</button>
+                                <button class="preset-btn upscale-btn" data-scale="2">2x</button>
+                                <button class="preset-btn upscale-btn" data-scale="4">4x</button>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Algorithm Mode</label>
+                            <select id="upscale-mode">
+                                <option value="smart">Smart Interpolation</option>
+                                <option value="sharp" selected>Sharp Edge & Detail</option>
+                                <option value="pixel">Pixel Art Crisp</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Detail Sharpening <span class="value-badge" id="sharpen-val">35%</span></label>
+                            <div class="slider-container">
+                                <input type="range" id="sharpen-slider" min="0" max="100" value="35">
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Custom Dimensions (px)</label>
+                            <div class="input-row">
+                                <input type="number" id="img-width" placeholder="Width">
+                                <span style="color: var(--text-muted); font-weight: 700;">×</span>
+                                <input type="number" id="img-height" placeholder="Height">
+                                <button class="aspect-ratio-btn active" id="aspect-ratio-toggle" title="Lock Aspect Ratio">
+                                    <i class="fa-solid fa-link"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: COLOR ADJUSTMENTS (NEW) -->
+                    <div class="tab-panel" id="tab-adjust">
+                        <div class="panel-header">Color Tuning</div>
+
+                        <div class="control-group">
+                            <label>Brightness <span class="value-badge" id="brightness-val">100%</span></label>
+                            <div class="slider-container"><input type="range" id="brightness-slider" min="0" max="200" value="100"></div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Contrast <span class="value-badge" id="contrast-val">100%</span></label>
+                            <div class="slider-container"><input type="range" id="contrast-slider" min="0" max="200" value="100"></div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Saturation <span class="value-badge" id="saturate-val">100%</span></label>
+                            <div class="slider-container"><input type="range" id="saturate-slider" min="0" max="200" value="100"></div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Hue Rotation <span class="value-badge" id="hue-val">0°</span></label>
+                            <div class="slider-container"><input type="range" id="hue-slider" min="0" max="360" value="0"></div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Color Temperature / Warmth <span class="value-badge" id="temp-val">0</span></label>
+                            <div class="slider-container"><input type="range" id="temp-slider" min="-100" max="100" value="0"></div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Grayscale <span class="value-badge" id="grayscale-val">0%</span></label>
+                            <div class="slider-container"><input type="range" id="grayscale-slider" min="0" max="100" value="0"></div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Invert Colors <span class="value-badge" id="invert-val">0%</span></label>
+                            <div class="slider-container"><input type="range" id="invert-slider" min="0" max="100" value="0"></div>
+                        </div>
+
+                        <button class="btn-action-secondary" id="reset-adjust-btn">
+                            <i class="fa-solid fa-rotate-left"></i> Reset Color Adjustments
+                        </button>
+                    </div>
+
+                    <!-- TAB 3: FILTERS -->
+                    <div class="tab-panel" id="tab-filters">
+                        <div class="panel-header">Aesthetic Filters</div>
+
+                        <div class="control-group">
+                            <label>Presets</label>
+                            <div class="btn-grid-4">
+                                <button class="preset-btn filter-preset-btn active" data-preset="normal">Normal</button>
+                                <button class="preset-btn filter-preset-btn" data-preset="vintage">Vintage</button>
+                                <button class="preset-btn filter-preset-btn" data-preset="bw">B & W</button>
+                                <button class="preset-btn filter-preset-btn" data-preset="warm">Warm Glow</button>
+                                <button class="preset-btn filter-preset-btn" data-preset="cool">Cool Cyber</button>
+                                <button class="preset-btn filter-preset-btn" data-preset="dramatic">Dramatic</button>
+                                <button class="preset-btn filter-preset-btn" data-preset="invert">Inverted</button>
+                                <button class="preset-btn filter-preset-btn" data-preset="sepia">Sepia</button>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Blur Intensity <span class="value-badge" id="blur-val">0px</span></label>
+                            <div class="slider-container"><input type="range" id="blur-slider" min="0" max="20" value="0"></div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Sepia Tone <span class="value-badge" id="sepia-val">0%</span></label>
+                            <div class="slider-container"><input type="range" id="sepia-slider" min="0" max="100" value="0"></div>
+                        </div>
+
+                        <button class="btn-action-secondary" id="reset-filters-btn">
+                            <i class="fa-solid fa-rotate-left"></i> Reset Filters
+                        </button>
+                    </div>
+
+                    <!-- TAB 4: EFFECTS (GRAIN, VIGNETTE, PIXELATE) (NEW) -->
+                    <div class="tab-panel" id="tab-effects">
+                        <div class="panel-header">Effects & Overlays</div>
+
+                        <div class="control-group">
+                            <label>Film Grain Noise <span class="value-badge" id="grain-val">0%</span></label>
+                            <div class="slider-container">
+                                <input type="range" id="grain-slider" min="0" max="100" value="0">
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Vignette Edge Shadow <span class="value-badge" id="vignette-val">0%</span></label>
+                            <div class="slider-container">
+                                <input type="range" id="vignette-slider" min="0" max="100" value="0">
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Pixelate Block Size <span class="value-badge" id="pixelate-val">1px</span></label>
+                            <div class="slider-container">
+                                <input type="range" id="pixelate-slider" min="1" max="50" value="1">
+                            </div>
+                        </div>
+
+                        <button class="btn-action-secondary" id="reset-effects-btn">
+                            <i class="fa-solid fa-rotate-left"></i> Clear Effects
+                        </button>
+                    </div>
+
+                    <!-- TAB 5: FRAMES & BORDERS (NEW) -->
+                    <div class="tab-panel" id="tab-frame">
+                        <div class="panel-header">Frames & Borders</div>
+
+                        <div class="control-group">
+                            <label>Border Thickness <span class="value-badge" id="border-width-val">0px</span></label>
+                            <div class="slider-container">
+                                <input type="range" id="border-width-slider" min="0" max="100" value="0">
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Border Color</label>
+                            <input type="color" id="border-color" value="#ffffff" style="height: 42px; width: 100%; cursor: pointer; padding: 2px;">
+                        </div>
+
+                        <div class="control-group">
+                            <label>Rounded Corners <span class="value-badge" id="border-radius-val">0px</span></label>
+                            <div class="slider-container">
+                                <input type="range" id="border-radius-slider" min="0" max="120" value="0">
+                            </div>
+                        </div>
+
+                        <button class="btn-action-secondary" id="reset-frame-btn">
+                            <i class="fa-solid fa-rotate-left"></i> Remove Borders
+                        </button>
+                    </div>
+
+                    <!-- TAB 6: COMPRESS -->
+                    <div class="tab-panel" id="tab-compress">
+                        <div class="panel-header">Compression Settings</div>
+                        
+                        <div class="control-group">
+                            <label>Compression Level</label>
+                            <div class="btn-grid">
+                                <button class="preset-btn compress-btn" data-quality="50" data-format="image/webp">Max</button>
+                                <button class="preset-btn compress-btn active" data-quality="75" data-format="image/webp">Balanced</button>
+                                <button class="preset-btn compress-btn" data-quality="90" data-format="image/jpeg">Low</button>
+                                <button class="preset-btn compress-btn" data-quality="100" data-format="image/png">Lossless</button>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Target Quality <span class="value-badge" id="compress-quality-val">75%</span></label>
+                            <div class="slider-container">
+                                <input type="range" id="compress-slider" min="5" max="100" value="75">
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Downscale Max Dimension</label>
+                            <select id="compress-resolution">
+                                <option value="original" selected>100% Original Resolution</option>
+                                <option value="2560">2560px (2K Ultra HD)</option>
+                                <option value="1920">1920px (Full HD Web)</option>
+                                <option value="1280">1280px (HD Mobile)</option>
+                                <option value="800">800px (Thumbnail)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- TAB 7: ROTATE -->
+                    <div class="tab-panel" id="tab-transform">
+                        <div class="panel-header">Rotate & Flip</div>
+
+                        <div class="control-group">
+                            <label>Rotation</label>
+                            <div class="input-row">
+                                <button class="btn-action-secondary" id="rotate-left-btn"><i class="fa-solid fa-rotate-left"></i> 90° Left</button>
+                                <button class="btn-action-secondary" id="rotate-right-btn"><i class="fa-solid fa-rotate-right"></i> 90° Right</button>
+                            </div>
+                        </div>
+
+                        <div class="control-group" style="margin-top: 1rem;">
+                            <label>Flip Direction</label>
+                            <div class="input-row">
+                                <button class="btn-action-secondary" id="flip-h-btn"><i class="fa-solid fa-arrows-left-right"></i> Flip Horiz</button>
+                                <button class="btn-action-secondary" id="flip-v-btn"><i class="fa-solid fa-arrows-up-down"></i> Flip Vert</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 8: WATERMARK -->
+                    <div class="tab-panel" id="tab-text">
+                        <div class="panel-header">Watermark Text</div>
+
+                        <div class="control-group">
+                            <label>Watermark Text</label>
+                            <input type="text" id="watermark-input" placeholder="Type overlay text...">
+                        </div>
+
+                        <div class="control-group">
+                            <label>Color & Position</label>
+                            <div class="input-row">
+                                <input type="color" id="watermark-color" value="#ffffff" style="height: 42px; cursor: pointer; padding: 2px;">
+                                <select id="watermark-position">
+                                    <option value="center">Center</option>
+                                    <option value="bottom-right" selected>Bottom Right</option>
+                                    <option value="bottom-left">Bottom Left</option>
+                                    <option value="top-right">Top Right</option>
+                                    <option value="top-left">Top Left</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label>Text Size <span class="value-badge" id="watermark-size-val">36px</span></label>
+                            <div class="slider-container">
+                                <input type="range" id="watermark-size-slider" min="12" max="100" value="36">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 9: EXPORT -->
+                    <div class="tab-panel" id="tab-export">
+                        <div class="panel-header">Export Options</div>
+
+                        <div class="control-group">
+                            <label>Target Format</label>
+                            <div class="btn-grid-4" id="format-btn-grid">
+                                <button class="preset-btn format-btn active" data-fmt="image/jpeg">JPG</button>
+                                <button class="preset-btn format-btn" data-fmt="image/png">PNG</button>
+                                <button class="preset-btn format-btn" data-fmt="image/webp">WEBP</button>
+                                <button class="preset-btn format-btn" data-fmt="image/gif">GIF</button>
+                                <button class="preset-btn format-btn" data-fmt="image/bmp">BMP</button>
+                                <button class="preset-btn format-btn" data-fmt="image/tiff">TIFF</button>
+                                <button class="preset-btn format-btn" data-fmt="image/svg+xml">SVG</button>
+                            </div>
+                            <select id="format-select" style="display: none;">
+                                <option value="image/jpeg" selected>JPG</option>
+                                <option value="image/png">PNG</option>
+                                <option value="image/webp">WEBP</option>
+                                <option value="image/gif">GIF</option>
+                                <option value="image/bmp">BMP</option>
+                                <option value="image/tiff">TIFF</option>
+                                <option value="image/svg+xml">SVG</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group" id="quality-group">
+                            <label>Quality / Compression <span class="value-badge" id="quality-val">85%</span></label>
+                            <div class="slider-container">
+                                <input type="range" id="quality-slider" min="1" max="100" value="85">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <button class="btn-action-primary" id="process-btn">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Process & Apply
+                    </button>
+                </div>
+            </section>
+
+            <!-- RIGHT PREVIEW CANVAS PANEL -->
+            <main class="preview-panel">
+                <div class="preview-card-wrap">
+                    <div class="preview-card-header">Output Preview</div>
+
+                    <div class="canvas-container">
+                        <div class="loader-overlay" id="loader">
+                            <div class="loader-spinner"></div>
+                            <span id="loader-text" style="font-size: 0.82rem; color: var(--text-muted);">Processing...</span>
+                        </div>
+
+                        <img id="preview-img" src="" alt="Preview Output">
+                    </div>
+
+                    <div class="info-pills-bar" id="info-badge">
+                        <span><i class="fa-solid fa-expand"></i> <span id="out-dim">0 x 0</span></span>
+                        <span><i class="fa-solid fa-hard-drive"></i> <span id="out-size">0 KB</span></span>
+                    </div>
+
+                    <a id="download-btn" class="download-btn-bottom">
+                        <i class="fa-solid fa-download"></i> Download Image
+                    </a>
+                </div>
+            </main>
+
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="app-footer">
+        <span>© 2024 PixelCraft Studio • 100% Client-Side Local Browser Processing</span>
+        <div class="footer-links">
+            <a href="#">Privacy</a>
+            <a href="#">Terms</a>
+            <a href="#">Support</a>
+        </div>
+    </footer>
+
+    <script>
+        const landingPage = document.getElementById('landing-page');
+        const editorPage = document.getElementById('editor-page');
+        const sceneLoader = document.getElementById('scene-loader');
+        const sceneLoaderTitle = document.getElementById('scene-loader-title');
+        const sceneLoaderSub = document.getElementById('scene-loader-sub');
+
+        const goHomeBtn = document.getElementById('go-home-btn');
+        const getStartedBtn = document.getElementById('get-started-btn');
+        const changePhotoBtn = document.getElementById('change-photo-btn');
+
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+
+        const imgWidth = document.getElementById('img-width');
+        const imgHeight = document.getElementById('img-height');
+        const aspectRatioBtn = document.getElementById('aspect-ratio-toggle');
+        const formatSelect = document.getElementById('format-select');
+        const qualitySlider = document.getElementById('quality-slider');
+        const qualityVal = document.getElementById('quality-val');
+        const qualityGroup = document.getElementById('quality-group');
+        const sharpenSlider = document.getElementById('sharpen-slider');
+        const sharpenVal = document.getElementById('sharpen-val');
+        const upscaleMode = document.getElementById('upscale-mode');
+        const upscaleBadge = document.getElementById('upscale-badge');
+        const processBtn = document.getElementById('process-btn');
+        
+        // Compress Elements
+        const compressSlider = document.getElementById('compress-slider');
+        const compressQualityVal = document.getElementById('compress-quality-val');
+        const compressResolution = document.getElementById('compress-resolution');
+
+        const previewImg = document.getElementById('preview-img');
+        const downloadBtn = document.getElementById('download-btn');
+        const loader = document.getElementById('loader');
+        const loaderText = document.getElementById('loader-text');
+        const outDim = document.getElementById('out-dim');
+        const outSize = document.getElementById('out-size');
+
+        // Color & Adjust Sliders
+        const brightnessSlider = document.getElementById('brightness-slider');
+        const brightnessVal = document.getElementById('brightness-val');
+        const contrastSlider = document.getElementById('contrast-slider');
+        const contrastVal = document.getElementById('contrast-val');
+        const saturateSlider = document.getElementById('saturate-slider');
+        const saturateVal = document.getElementById('saturate-val');
+        const hueSlider = document.getElementById('hue-slider');
+        const hueVal = document.getElementById('hue-val');
+        const tempSlider = document.getElementById('temp-slider');
+        const tempVal = document.getElementById('temp-val');
+        const grayscaleSlider = document.getElementById('grayscale-slider');
+        const grayscaleVal = document.getElementById('grayscale-val');
+        const invertSlider = document.getElementById('invert-slider');
+        const invertVal = document.getElementById('invert-val');
+        const resetAdjustBtn = document.getElementById('reset-adjust-btn');
+
+        // Crop Controls
+        const cropZoomSlider = document.getElementById('crop-zoom-slider');
+        const cropZoomVal = document.getElementById('crop-zoom-val');
+        const cropXSlider = document.getElementById('crop-x-slider');
+        const cropXVal = document.getElementById('crop-x-val');
+        const cropYSlider = document.getElementById('crop-y-slider');
+        const cropYVal = document.getElementById('crop-y-val');
+        const resetCropBtn = document.getElementById('reset-crop-btn');
+        let selectedCropRatio = 'free';
+
+        // Filters
+        const blurSlider = document.getElementById('blur-slider');
+        const blurVal = document.getElementById('blur-val');
+        const sepiaSlider = document.getElementById('sepia-slider');
+        const sepiaVal = document.getElementById('sepia-val');
+        const resetFiltersBtn = document.getElementById('reset-filters-btn');
+
+        // Effects
+        const grainSlider = document.getElementById('grain-slider');
+        const grainVal = document.getElementById('grain-val');
+        const vignetteSlider = document.getElementById('vignette-slider');
+        const vignetteVal = document.getElementById('vignette-val');
+        const pixelateSlider = document.getElementById('pixelate-slider');
+        const pixelateVal = document.getElementById('pixelate-val');
+        const resetEffectsBtn = document.getElementById('reset-effects-btn');
+
+        // Frame / Border
+        const borderWidthSlider = document.getElementById('border-width-slider');
+        const borderWidthVal = document.getElementById('border-width-val');
+        const borderColorInput = document.getElementById('border-color');
+        const borderRadiusSlider = document.getElementById('border-radius-slider');
+        const borderRadiusVal = document.getElementById('border-radius-val');
+        const resetFrameBtn = document.getElementById('reset-frame-btn');
+
+        // Rotate
+        const rotateLeftBtn = document.getElementById('rotate-left-btn');
+        const rotateRightBtn = document.getElementById('rotate-right-btn');
+        const flipHBtn = document.getElementById('flip-h-btn');
+        const flipVBtn = document.getElementById('flip-v-btn');
+
+        // Watermark
+        const watermarkInput = document.getElementById('watermark-input');
+        const watermarkColor = document.getElementById('watermark-color');
+        const watermarkPosition = document.getElementById('watermark-position');
+        const watermarkSizeSlider = document.getElementById('watermark-size-slider');
+        const watermarkSizeVal = document.getElementById('watermark-size-val');
+
+        let loadedImage = null;
+        let originalAspectRatio = 1;
+        let lockAspectRatio = true;
+        let originalFileName = "processed_image";
+        let currentScaleFactor = 1;
+        let baseNaturalWidth = 0;
+        let baseNaturalHeight = 0;
+        
+        let currentRotation = 0;
+        let flipH = false;
+        let flipV = false;
+
+        // SAFE CANVAS LIMIT DETECTOR
+        function getSafeCanvasDimensions(width, height) {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const maxDim = isMobile ? 8192 : 16384;
+            const maxArea = isMobile ? 33554432 : 134217728;
+
+            let w = width;
+            let h = height;
+
+            if (w > maxDim || h > maxDim || (w * h) > maxArea) {
+                let scale = Math.min(maxDim / w, maxDim / h, Math.sqrt(maxArea / (w * h)));
+                w = Math.floor(w * scale);
+                h = Math.floor(h * scale);
+            }
+            return { width: Math.max(1, w), height: Math.max(1, h), clamped: (w !== width || h !== height) };
+        }
+
+        function showSceneLoader(title = "Preparing Your Studio...", sub = "Reading pixels & initializing workspace") {
+            sceneLoaderTitle.textContent = title;
+            sceneLoaderSub.textContent = sub;
+            sceneLoader.classList.add('active');
+        }
+
+        function hideSceneLoader() {
+            sceneLoader.classList.remove('active');
+        }
+
+        function showEditorView() {
+            landingPage.classList.remove('active');
+            setTimeout(() => {
+                landingPage.style.display = 'none';
+                editorPage.style.display = 'flex';
+                getStartedBtn.style.display = 'none';
+                changePhotoBtn.style.display = 'flex';
+                setTimeout(() => editorPage.classList.add('active'), 20);
+            }, 300);
+        }
+
+        function showLandingView() {
+            editorPage.classList.remove('active');
+            setTimeout(() => {
+                editorPage.style.display = 'none';
+                landingPage.style.display = 'flex';
+                getStartedBtn.style.display = 'flex';
+                changePhotoBtn.style.display = 'none';
+                setTimeout(() => landingPage.classList.add('active'), 20);
+            }, 300);
+        }
+
+        goHomeBtn.addEventListener('click', showLandingView);
+        getStartedBtn.addEventListener('click', () => fileInput.click());
+        changePhotoBtn.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        // SIDEBAR TAB NAVIGATION
+        const sidebarTabs = document.querySelectorAll('.sidebar-tab');
+        sidebarTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                sidebarTabs.forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+                
+                tab.classList.add('active');
+                const panel = document.getElementById(tab.dataset.tab);
+                if (panel) panel.classList.add('active');
+            });
+        });
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            window.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+        });
+
+        window.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            if (dt && dt.files && dt.files.length > 0) {
+                handleFile(dt.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        aspectRatioBtn.addEventListener('click', () => {
+            lockAspectRatio = !lockAspectRatio;
+            aspectRatioBtn.classList.toggle('active', lockAspectRatio);
+        });
+
+        imgWidth.addEventListener('input', () => {
+            if (lockAspectRatio && loadedImage) {
+                imgHeight.value = Math.round(imgWidth.value / originalAspectRatio);
+            }
+        });
+        imgHeight.addEventListener('input', () => {
+            if (lockAspectRatio && loadedImage) {
+                imgWidth.value = Math.round(imgHeight.value * originalAspectRatio);
+            }
+        });
+
+        // CROP ASPECT RATIO BUTTONS
+        document.querySelectorAll('.crop-ratio-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.crop-ratio-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedCropRatio = btn.dataset.ratio;
+                if (loadedImage) processImage();
+            });
+        });
+
+        cropZoomSlider.addEventListener('input', (e) => { cropZoomVal.textContent = `${e.target.value}%`; });
+        cropXSlider.addEventListener('input', (e) => { cropXVal.textContent = `${e.target.value}%`; });
+        cropYSlider.addEventListener('input', (e) => { cropYVal.textContent = `${e.target.value}%`; });
+
+        resetCropBtn.addEventListener('click', () => {
+            cropZoomSlider.value = 100; cropZoomVal.textContent = '100%';
+            cropXSlider.value = 0; cropXVal.textContent = '0%';
+            cropYSlider.value = 0; cropYVal.textContent = '0%';
+            selectedCropRatio = 'free';
+            document.querySelectorAll('.crop-ratio-btn').forEach(b => b.classList.toggle('active', b.dataset.ratio === 'free'));
+            if (loadedImage) processImage();
+        });
+
+        // PHOTO COMPRESSOR HANDLERS
+        compressSlider.addEventListener('input', (e) => {
+            const val = e.target.value;
+            compressQualityVal.textContent = `${val}%`;
+            qualitySlider.value = val;
+            qualityVal.textContent = `${val}%`;
+            if (loadedImage) processImage();
+        });
+
+        compressResolution.addEventListener('change', () => {
+            if (!loadedImage) return;
+            const targetMax = compressResolution.value;
+            if (targetMax === 'original') {
+                setUpscaleFactor(1);
+            } else {
+                const maxDim = parseInt(targetMax);
+                if (baseNaturalWidth > maxDim || baseNaturalHeight > maxDim) {
+                    let scale = Math.min(maxDim / baseNaturalWidth, maxDim / baseNaturalHeight);
+                    imgWidth.value = Math.round(baseNaturalWidth * scale);
+                    imgHeight.value = Math.round(baseNaturalHeight * scale);
+                } else {
+                    imgWidth.value = baseNaturalWidth;
+                    imgHeight.value = baseNaturalHeight;
+                }
+            }
+            processImage();
+        });
+
+        document.querySelectorAll('.compress-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.compress-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const q = btn.dataset.quality;
+                const fmt = btn.dataset.format;
+
+                compressSlider.value = q;
+                compressQualityVal.textContent = `${q}%`;
+                qualitySlider.value = q;
+                qualityVal.textContent = `${q}%`;
+
+                if (fmt) formatSelect.value = fmt;
+                if (loadedImage) processImage();
+            });
+        });
+
+        // EXPORT FORMAT BUTTONS
+        document.querySelectorAll('.format-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                formatSelect.value = btn.dataset.fmt;
+                
+                const fmt = btn.dataset.fmt;
+                if (fmt === 'image/png' || fmt === 'image/gif' || fmt === 'image/svg+xml' || fmt === 'image/bmp') {
+                    qualityGroup.style.opacity = '0.5';
+                    qualitySlider.disabled = true;
+                } else {
+                    qualityGroup.style.opacity = '1';
+                    qualitySlider.disabled = false;
+                }
+                if (loadedImage) processImage();
+            });
+        });
+
+        // SLIDER VALUE DISPLAYS
+        brightnessSlider.addEventListener('input', (e) => { brightnessVal.textContent = `${e.target.value}%`; });
+        contrastSlider.addEventListener('input', (e) => { contrastVal.textContent = `${e.target.value}%`; });
+        saturateSlider.addEventListener('input', (e) => { saturateVal.textContent = `${e.target.value}%`; });
+        hueSlider.addEventListener('input', (e) => { hueVal.textContent = `${e.target.value}°`; });
+        tempSlider.addEventListener('input', (e) => { tempVal.textContent = `${e.target.value}`; });
+        grayscaleSlider.addEventListener('input', (e) => { grayscaleVal.textContent = `${e.target.value}%`; });
+        invertSlider.addEventListener('input', (e) => { invertVal.textContent = `${e.target.value}%`; });
+        
+        blurSlider.addEventListener('input', (e) => { blurVal.textContent = `${e.target.value}px`; });
+        sepiaSlider.addEventListener('input', (e) => { sepiaVal.textContent = `${e.target.value}%`; });
+        qualitySlider.addEventListener('input', (e) => { qualityVal.textContent = `${e.target.value}%`; });
+        sharpenSlider.addEventListener('input', (e) => { sharpenVal.textContent = `${e.target.value}%`; });
+        
+        grainSlider.addEventListener('input', (e) => { grainVal.textContent = `${e.target.value}%`; });
+        vignetteSlider.addEventListener('input', (e) => { vignetteVal.textContent = `${e.target.value}%`; });
+        pixelateSlider.addEventListener('input', (e) => { pixelateVal.textContent = `${e.target.value}px`; });
+
+        borderWidthSlider.addEventListener('input', (e) => { borderWidthVal.textContent = `${e.target.value}px`; });
+        borderRadiusSlider.addEventListener('input', (e) => { borderRadiusVal.textContent = `${e.target.value}px`; });
+        watermarkSizeSlider.addEventListener('input', (e) => { watermarkSizeVal.textContent = `${e.target.value}px`; });
+
+        // RESET BUTTONS
+        resetAdjustBtn.addEventListener('click', () => {
+            brightnessSlider.value = 100; brightnessVal.textContent = '100%';
+            contrastSlider.value = 100; contrastVal.textContent = '100%';
+            saturateSlider.value = 100; saturateVal.textContent = '100%';
+            hueSlider.value = 0; hueVal.textContent = '0°';
+            tempSlider.value = 0; tempVal.textContent = '0';
+            grayscaleSlider.value = 0; grayscaleVal.textContent = '0%';
+            invertSlider.value = 0; invertVal.textContent = '0%';
+            if (loadedImage) processImage();
+        });
+
+        resetEffectsBtn.addEventListener('click', () => {
+            grainSlider.value = 0; grainVal.textContent = '0%';
+            vignetteSlider.value = 0; vignetteVal.textContent = '0%';
+            pixelateSlider.value = 1; pixelateVal.textContent = '1px';
+            if (loadedImage) processImage();
+        });
+
+        resetFrameBtn.addEventListener('click', () => {
+            borderWidthSlider.value = 0; borderWidthVal.textContent = '0px';
+            borderRadiusSlider.value = 0; borderRadiusVal.textContent = '0px';
+            borderColorInput.value = '#ffffff';
+            if (loadedImage) processImage();
+        });
+
+        document.querySelectorAll('.filter-preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-preset-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const preset = btn.dataset.preset;
+                if (preset === 'normal') resetFilterValues();
+                else if (preset === 'vintage') { setFilterValues(95, 110, 85, 0, 40, 0, 0, 0); }
+                else if (preset === 'bw') { setFilterValues(105, 125, 0, 0, 0, 0, 0, 100); }
+                else if (preset === 'warm') { setFilterValues(105, 105, 120, 0, 20, 0, 25, 0); }
+                else if (preset === 'cool') { setFilterValues(100, 110, 115, 0, 0, 190, -30, 0); }
+                else if (preset === 'dramatic') { setFilterValues(110, 145, 130, 0, 0, 0, 0, 0); }
+                else if (preset === 'invert') { setFilterValues(100, 100, 100, 0, 0, 0, 0, 0); invertSlider.value = 100; invertVal.textContent = '100%'; }
+                else if (preset === 'sepia') { setFilterValues(100, 100, 100, 0, 80, 0, 0, 0); }
+
+                if (loadedImage) processImage();
+            });
+        });
+
+        function setFilterValues(b, c, s, bl, sep, hue = 0, temp = 0, gray = 0) {
+            brightnessSlider.value = b; brightnessVal.textContent = `${b}%`;
+            contrastSlider.value = c; contrastVal.textContent = `${c}%`;
+            saturateSlider.value = s; saturateVal.textContent = `${s}%`;
+            blurSlider.value = bl; blurVal.textContent = `${bl}px`;
+            sepiaSlider.value = sep; sepiaVal.textContent = `${sep}%`;
+            hueSlider.value = hue; hueVal.textContent = `${hue}°`;
+            tempSlider.value = temp; tempVal.textContent = `${temp}`;
+            grayscaleSlider.value = gray; grayscaleVal.textContent = `${gray}%`;
+            invertSlider.value = 0; invertVal.textContent = '0%';
+        }
+
+        function resetFilterValues() {
+            setFilterValues(100, 100, 100, 0, 0, 0, 0, 0);
+        }
+
+        resetFiltersBtn.addEventListener('click', () => {
+            resetFilterValues();
+            if (loadedImage) processImage();
+        });
+
+        rotateLeftBtn.addEventListener('click', () => { currentRotation = (currentRotation - 90 + 360) % 360; if (loadedImage) processImage(); });
+        rotateRightBtn.addEventListener('click', () => { currentRotation = (currentRotation + 90) % 360; if (loadedImage) processImage(); });
+        flipHBtn.addEventListener('click', () => { flipH = !flipH; flipHBtn.classList.toggle('active', flipH); if (loadedImage) processImage(); });
+        flipVBtn.addEventListener('click', () => { flipV = !flipV; flipVBtn.classList.toggle('active', flipV); if (loadedImage) processImage(); });
+
+        const upscaleBtns = document.querySelectorAll('.upscale-btn');
+        upscaleBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const factor = parseFloat(btn.dataset.scale);
+                setUpscaleFactor(factor);
+                if (loadedImage) processImage();
+            });
+        });
+
+        function setUpscaleFactor(factor) {
+            currentScaleFactor = factor;
+            upscaleBtns.forEach(b => b.classList.toggle('active', parseFloat(b.dataset.scale) === factor));
+
+            if (loadedImage) {
+                let targetW = Math.round(baseNaturalWidth * factor);
+                let targetH = Math.round(baseNaturalHeight * factor);
+                
+                const safe = getSafeCanvasDimensions(targetW, targetH);
+                if (safe.clamped) {
+                    upscaleBadge.textContent = `${factor}x (Clamped)`;
+                } else {
+                    upscaleBadge.textContent = factor === 1 ? '1x' : `${factor}x`;
+                }
+
+                imgWidth.value = safe.width;
+                imgHeight.value = safe.height;
+            }
+        }
+
+        // FILE READER HANDLER
+        async function handleFile(file) {
+            if (!file) return;
+
+            showSceneLoader("Preparing Your Studio...", "Reading image file & initializing workspace");
+
+            originalFileName = file.name.substring(0, file.name.lastIndexOf('.')) || "processed_image";
+            const fileNameLower = file.name.toLowerCase();
+
+            try {
+                let dataUrl = '';
+
+                if ((fileNameLower.endsWith('.heic') || fileNameLower.endsWith('.heif') || file.type === "image/heic") && typeof heic2any !== 'undefined') {
+                    const convertedBlob = await heic2any({ blob: file, toType: "image/jpeg" });
+                    const blobToRead = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+                    dataUrl = await readFileAsDataURL(blobToRead);
+                } 
+                else if ((fileNameLower.endsWith('.tiff') || fileNameLower.endsWith('.tif')) && typeof UTIF !== 'undefined') {
+                    const buffer = await file.arrayBuffer();
+                    const ifds = UTIF.decode(buffer);
+                    if (!ifds || !ifds.length) throw new Error("Unsupported TIFF layout.");
+                    UTIF.decodeImage(buffer, ifds[0]);
+                    const rgba = UTIF.toRGBA8(ifds[0]);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = ifds[0].width;
+                    canvas.height = ifds[0].height;
+                    const ctx = canvas.getContext('2d');
+                    const imgData = ctx.createImageData(canvas.width, canvas.height);
+                    imgData.data.set(rgba);
+                    ctx.putImageData(imgData, 0, 0);
+                    dataUrl = canvas.toDataURL('image/png');
+                } 
+                else {
+                    dataUrl = await readFileAsDataURL(file);
+                }
+
+                const img = new Image();
+                img.onload = () => {
+                    loadedImage = img;
+                    baseNaturalWidth = img.naturalWidth;
+                    baseNaturalHeight = img.naturalHeight;
+                    originalAspectRatio = img.naturalWidth / img.naturalHeight;
+                    
+                    setUpscaleFactor(currentScaleFactor);
+
+                    setTimeout(() => {
+                        showEditorView();
+                        hideSceneLoader();
+                        processImage();
+                    }, 400);
+                };
+
+                img.onerror = () => {
+                    alert("Could not load selected photo. Please select a valid image format.");
+                    hideSceneLoader();
+                    showLandingView();
+                };
+
+                img.src = dataUrl;
+
+            } catch (err) {
+                console.error("File loading error:", err);
+                alert("Error loading file: " + (err.message || "Unknown error"));
+                hideSceneLoader();
+                showLandingView();
+            } finally {
+                fileInput.value = '';
+            }
+        }
+
+        function readFileAsDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(new Error("Failed to read file."));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        processBtn.addEventListener('click', processImage);
+
+        // MAIN IMAGE PROCESSING PIPELINE
+        async function processImage() {
+            if (!loadedImage) return;
+
+            showLoader("Processing Image...");
+
+            setTimeout(() => {
+                let reqWidth = parseInt(imgWidth.value) || loadedImage.naturalWidth;
+                let reqHeight = parseInt(imgHeight.value) || loadedImage.naturalHeight;
+
+                // CROP & ASPECT RATIO CALCULATIONS
+                let cropTargetRatio = originalAspectRatio;
+                if (selectedCropRatio === '1:1') cropTargetRatio = 1.0;
+                else if (selectedCropRatio === '16:9') cropTargetRatio = 16 / 9;
+                else if (selectedCropRatio === '9:16') cropTargetRatio = 9 / 16;
+                else if (selectedCropRatio === '4:3') cropTargetRatio = 4 / 3;
+                else if (selectedCropRatio === '3:2') cropTargetRatio = 3 / 2;
+
+                let cropSourceW = loadedImage.naturalWidth;
+                let cropSourceH = loadedImage.naturalHeight;
+
+                if (selectedCropRatio !== 'free') {
+                    if (originalAspectRatio > cropTargetRatio) {
+                        cropSourceW = loadedImage.naturalHeight * cropTargetRatio;
+                    } else {
+                        cropSourceH = loadedImage.naturalWidth / cropTargetRatio;
+                    }
+                }
+
+                // CROP ZOOM & OFFSET POSITIONS
+                const zoomFactor = parseFloat(cropZoomSlider.value) / 100;
+                cropSourceW = cropSourceW / zoomFactor;
+                cropSourceH = cropSourceH / zoomFactor;
+
+                const maxOffsetX = (loadedImage.naturalWidth - cropSourceW) / 2;
+                const maxOffsetY = (loadedImage.naturalHeight - cropSourceH) / 2;
+
+                const offsetXPercent = parseFloat(cropXSlider.value) / 100;
+                const offsetYPercent = parseFloat(cropYSlider.value) / 100;
+
+                let cropSourceX = ((loadedImage.naturalWidth - cropSourceW) / 2) + (maxOffsetX * offsetXPercent);
+                let cropSourceY = ((loadedImage.naturalHeight - cropSourceH) / 2) + (maxOffsetY * offsetYPercent);
+
+                // CLAMP CROP BOUNDS
+                cropSourceX = Math.max(0, Math.min(loadedImage.naturalWidth - cropSourceW, cropSourceX));
+                cropSourceY = Math.max(0, Math.min(loadedImage.naturalHeight - cropSourceH, cropSourceY));
+
+                if (selectedCropRatio !== 'free') {
+                    reqHeight = Math.round(reqWidth / cropTargetRatio);
+                }
+
+                const safeDim = getSafeCanvasDimensions(reqWidth, reqHeight);
+                if (safeDim.clamped) {
+                    imgWidth.value = safeDim.width;
+                    imgHeight.value = safeDim.height;
+                }
+
+                const targetWidth = safeDim.width;
+                const targetHeight = safeDim.height;
+                const selectedMode = upscaleMode.value;
+
+                let canvas = document.createElement('canvas');
+                let isSwapped = (currentRotation % 180 !== 0);
+                
+                const borderWidth = parseInt(borderWidthSlider.value);
+                const totalBorder = borderWidth * 2;
+
+                canvas.width = (isSwapped ? targetHeight : targetWidth) + totalBorder;
+                canvas.height = (isSwapped ? targetWidth : targetHeight) + totalBorder;
+
+                let ctx = canvas.getContext('2d');
+
+                // BORDER BACKGROUND
+                if (borderWidth > 0) {
+                    ctx.fillStyle = borderColorInput.value;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+
+                ctx.save();
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.rotate((currentRotation * Math.PI) / 180);
+                ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+
+                // CSS FILTERS COMBINED
+                const b = brightnessSlider.value;
+                const c = contrastSlider.value;
+                const s = saturateSlider.value;
+                const bl = blurSlider.value;
+                const sep = sepiaSlider.value;
+                const hue = hueSlider.value;
+                const gray = grayscaleSlider.value;
+                const inv = invertSlider.value;
+
+                ctx.filter = `brightness(${b}%) contrast(${c}%) saturate(${s}%) blur(${bl}px) sepia(${sep}%) hue-rotate(${hue}deg) grayscale(${gray}%) invert(${inv}%)`;
+
+                let drawW = targetWidth;
+                let drawH = targetHeight;
+
+                if (selectedMode === 'pixel') {
+                    ctx.imageSmoothingEnabled = false;
+                } else {
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                }
+
+                ctx.drawImage(
+                    loadedImage,
+                    cropSourceX, cropSourceY, cropSourceW, cropSourceH,
+                    -drawW / 2, -drawH / 2, drawW, drawH
+                );
+
+                ctx.restore();
+
+                // PIXELATE EFFECT OVERLAY
+                const pixelateSize = parseInt(pixelateSlider.value);
+                if (pixelateSize > 1) {
+                    applyPixelateEffect(ctx, canvas.width, canvas.height, pixelateSize);
+                }
+
+                // TEMPERATURE / WARMTH TINT
+                const tempValNum = parseInt(tempSlider.value);
+                if (tempValNum !== 0) {
+                    applyTemperatureTint(ctx, canvas.width, canvas.height, tempValNum);
+                }
+
+                // SHARPEN FILTER
+                const sharpenAmount = parseInt(sharpenSlider.value) / 100;
+                if (sharpenAmount > 0 && selectedMode !== 'pixel') {
+                    applySharpenFilter(ctx, canvas.width, canvas.height, sharpenAmount);
+                }
+
+                // FILM GRAIN NOISE
+                const grainAmount = parseInt(grainSlider.value);
+                if (grainAmount > 0) {
+                    applyFilmGrain(ctx, canvas.width, canvas.height, grainAmount);
+                }
+
+                // VIGNETTE EDGE SHADOW
+                const vignetteAmount = parseInt(vignetteSlider.value);
+                if (vignetteAmount > 0) {
+                    applyVignetteEffect(ctx, canvas.width, canvas.height, vignetteAmount);
+                }
+
+                // ROUNDED CORNERS MASK
+                const borderRadius = parseInt(borderRadiusSlider.value);
+                if (borderRadius > 0) {
+                    applyRoundedCorners(ctx, canvas.width, canvas.height, borderRadius);
+                }
+
+                // WATERMARK OVERLAY
+                const watermarkText = watermarkInput.value.trim();
+                if (watermarkText !== '') {
+                    const fontSize = parseInt(watermarkSizeSlider.value);
+                    ctx.font = `bold ${fontSize}px 'Plus Jakarta Sans', sans-serif`;
+                    ctx.fillStyle = watermarkColor.value;
+                    ctx.textBaseline = 'middle';
+
+                    const padding = 20 + borderWidth;
+                    let x = canvas.width / 2;
+                    let y = canvas.height / 2;
+
+                    const pos = watermarkPosition.value;
+
+                    if (pos === 'top-left') { x = padding; y = padding + fontSize / 2; ctx.textAlign = 'left'; }
+                    else if (pos === 'top-right') { x = canvas.width - padding; y = padding + fontSize / 2; ctx.textAlign = 'right'; }
+                    else if (pos === 'bottom-left') { x = padding; y = canvas.height - padding - fontSize / 2; ctx.textAlign = 'left'; }
+                    else if (pos === 'bottom-right') { x = canvas.width - padding; y = canvas.height - padding - fontSize / 2; ctx.textAlign = 'right'; }
+                    else { ctx.textAlign = 'center'; }
+
+                    ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
+                    ctx.shadowBlur = 8;
+                    ctx.fillText(watermarkText, x, y);
+                }
+
+                let selectedFormat = formatSelect.value;
+                let exportFormat = selectedFormat;
+
+                const supportedNativeFormats = ['image/jpeg', 'image/png', 'image/webp'];
+                if (!supportedNativeFormats.includes(selectedFormat) && selectedFormat !== 'image/svg+xml') {
+                    exportFormat = 'image/png';
+                }
+
+                if (selectedFormat === 'image/jpeg') {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = canvas.width;
+                    tempCanvas.height = canvas.height;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.fillStyle = '#FFFFFF';
+                    tempCtx.fillRect(0, 0, canvas.width, canvas.height);
+                    tempCtx.drawImage(canvas, 0, 0);
+                    canvas = tempCanvas;
+                }
+
+                const quality = parseFloat(qualitySlider.value) / 100;
+
+                if (selectedFormat === 'image/svg+xml') {
+                    const imgDataUrl = canvas.toDataURL('image/png');
+                    const svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}">
+                        <image href="${imgDataUrl}" width="${canvas.width}" height="${canvas.height}"/>
+                    </svg>`;
+                    const blob = new Blob([svgString], { type: 'image/svg+xml' });
+                    updatePreviewAndDownload(blob, `${originalFileName}_pixelcraft.svg`, canvas.width, canvas.height);
+                    hideLoader();
+                    return;
+                }
+
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        canvas.toBlob((retryBlob) => {
+                            if (!retryBlob) {
+                                alert("Browser memory limit reached. Please reduce image dimensions.");
+                                hideLoader();
+                                return;
+                            }
+                            const ext = selectedFormat.split('/')[1].replace('+xml', '');
+                            updatePreviewAndDownload(retryBlob, `${originalFileName}_pixelcraft.${ext}`, canvas.width, canvas.height);
+                            hideLoader();
+                        }, 'image/jpeg', 0.9);
+                        return;
+                    }
+                    const ext = selectedFormat.split('/')[1].replace('+xml', '');
+                    updatePreviewAndDownload(blob, `${originalFileName}_pixelcraft.${ext}`, canvas.width, canvas.height);
+                    hideLoader();
+                }, exportFormat, quality);
+
+            }, 60);
+        }
+
+        // HELPER CANVAS FILTERS
+        function applySharpenFilter(ctx, width, height, strength) {
+            if (width * height > 16000000) return;
+
+            try {
+                const imgData = ctx.getImageData(0, 0, width, height);
+                const data = imgData.data;
+                const copy = new Uint8ClampedArray(data);
+                const mix = strength * 0.8;
+
+                for (let y = 1; y < height - 1; y++) {
+                    for (let x = 1; x < width - 1; x++) {
+                        const idx = (y * width + x) * 4;
+                        for (let c = 0; c < 3; c++) {
+                            const cIdx = idx + c;
+                            const top = ((y - 1) * width + x) * 4 + c;
+                            const bottom = ((y + 1) * width + x) * 4 + c;
+                            const left = (y * width + (x - 1)) * 4 + c;
+                            const right = (y * width + (x + 1)) * 4 + c;
+
+                            const center = copy[cIdx];
+                            const val = center * (1 + 4 * mix) - mix * (copy[top] + copy[bottom] + copy[left] + copy[right]);
+                            data[cIdx] = Math.min(255, Math.max(0, val));
+                        }
+                    }
+                }
+                ctx.putImageData(imgData, 0, 0);
+            } catch (e) {
+                console.warn("Sharpening filter skipped.");
+            }
+        }
+
+        function applyPixelateEffect(ctx, width, height, size) {
+            const w = Math.ceil(width / size);
+            const h = Math.ceil(height / size);
+            const offscreen = document.createElement('canvas');
+            offscreen.width = w;
+            offscreen.height = h;
+            const offCtx = offscreen.getContext('2d');
+            offCtx.imageSmoothingEnabled = false;
+            offCtx.drawImage(ctx.canvas, 0, 0, w, h);
+
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(offscreen, 0, 0, w, h, 0, 0, width, height);
+        }
+
+        function applyTemperatureTint(ctx, width, height, temp) {
+            ctx.save();
+            ctx.globalCompositeOperation = 'overlay';
+            if (temp > 0) {
+                ctx.fillStyle = `rgba(255, 160, 0, ${temp / 250})`; // Warm Orange Tint
+            } else {
+                ctx.fillStyle = `rgba(0, 120, 255, ${Math.abs(temp) / 250})`; // Cool Blue Tint
+            }
+            ctx.fillRect(0, 0, width, height);
+            ctx.restore();
+        }
+
+        function applyFilmGrain(ctx, width, height, intensity) {
+            const imgData = ctx.getImageData(0, 0, width, height);
+            const data = imgData.data;
+            const amount = intensity * 0.4;
+
+            for (let i = 0; i < data.length; i += 4) {
+                const noise = (Math.random() - 0.5) * amount * 2.55;
+                data[i] = Math.min(255, Math.max(0, data[i] + noise));
+                data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + noise));
+                data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + noise));
+            }
+            ctx.putImageData(imgData, 0, 0);
+        }
+
+        function applyVignetteEffect(ctx, width, height, intensity) {
+            const outerRadius = Math.sqrt(Math.pow(width / 2, 2) + Math.pow(height / 2, 2));
+            const gradient = ctx.createRadialGradient(
+                width / 2, height / 2, outerRadius * 0.3,
+                width / 2, height / 2, outerRadius
+            );
+            const alpha = intensity / 100;
+            gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+            gradient.addColorStop(1, `rgba(0, 0, 0, ${alpha * 0.85})`);
+
+            ctx.save();
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+            ctx.restore();
+        }
+
+        function applyRoundedCorners(ctx, width, height, radius) {
+            ctx.save();
+            ctx.globalCompositeOperation = 'destination-in';
+            ctx.beginPath();
+            ctx.moveTo(radius, 0);
+            ctx.lineTo(width - radius, 0);
+            ctx.quadraticCurveTo(width, 0, width, radius);
+            ctx.lineTo(width, height - radius);
+            ctx.quadraticCurveTo(width, height, width - radius, height);
+            ctx.lineTo(radius, height);
+            ctx.quadraticCurveTo(0, height, 0, height - radius);
+            ctx.lineTo(0, radius);
+            ctx.quadraticCurveTo(0, 0, radius, 0);
+            ctx.closePath();
+            ctx.fillStyle = '#000000';
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function updatePreviewAndDownload(blob, filename, width, height) {
+            const blobUrl = URL.createObjectURL(blob);
+            previewImg.src = blobUrl;
+            
+            downloadBtn.href = blobUrl;
+            downloadBtn.download = filename;
+            downloadBtn.style.display = 'flex';
+
+            outDim.textContent = `${width} × ${height} px`;
+            outSize.textContent = formatBytes(blob.size);
+        }
+
+        function showLoader(text) {
+            loaderText.textContent = text;
+            loader.style.display = 'flex';
+        }
+
+        function hideLoader() {
+            loader.style.display = 'none';
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>
